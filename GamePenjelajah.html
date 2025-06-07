@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Petualangan Hutan</title>
+  <!-- Tambahkan Google Fonts untuk nuansa game -->
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+  <style>
+    /* Perbaikan ukuran font, box, dan layout agar responsif */
+    body {
+      font-family: 'VT323', 'Press Start 2P', 'Arial', monospace, sans-serif;
+      background-color: #222;
+      color: #f0f0f0;
+      text-align: center;
+      padding: 20px;
+      margin: 0;
+      min-height: 100vh;
+      overflow-x: hidden;
+      transition: background 1s;
+    }
+
+    /* Youtube background tetap di bawah, tidak blur, tidak pointer-events none */
+    #youtube-bg {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: -2;
+      pointer-events: none;
+      opacity: 1;
+      object-fit: cover;
+      filter: none;
+      transition: opacity 1s;
+    }
+
+    /* Menyesuaikan ukuran box agar lebih responsif dan menampilkan pilihan secara sejajar */
+    #game {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      margin: 0;
+      width: 90vw;
+      max-width: 700px;
+      min-width: 300px;
+      box-sizing: border-box;
+      z-index: 2;
+      background: rgba(30,30,40,0.85);
+      border-radius: 18px;
+      box-shadow: 0 8px 32px 0 rgba(0,0,0,0.7), 0 0 0 4px #ffe06644, 0 0 32px 8px #ffb70033;
+      border: 2px solid #ffe06699;
+      padding: 18px 8px 12px 8px;
+      margin-top: 0;
+      transition: box-shadow 0.6s cubic-bezier(.4,2,.3,1), background 0.7s;
+      animation: popin 1.2s cubic-bezier(.68,-0.55,.27,1.55);
+    }
+
+    #scene {
+      width: 300px;
+      height: auto;
+      min-width: 80px;
+      min-height: 80px;
+      aspect-ratio: 1/1;
+      margin-bottom: 12px;
+      border: 3px solid #ffe066;
+      box-shadow: 0 0 24px #ffe06655, 0 4px 16px rgba(0,0,0,0.4);
+      transition: box-shadow 0.5s, border 0.5s;
+    }
+
+    h1 {
+      font-size: 1.5em;
+      margin-bottom: 16px;
+      word-break: break-word;
+      color: #ffe066;
+      text-shadow: 0 0 8px #ffb700, 2px 2px 0 #222;
+      letter-spacing: 2px;
+    }
+
+    /* Mengubah font deskripsi agar lebih mulus dan jelas untuk dibaca */
+    #description {
+      font-family: 'VT323', 'Arial', sans-serif;
+      font-size: 1.3em;
+      padding: 16px 12px;
+      margin: 20px 0;
+      border-radius: 14px;
+      background: rgba(40,40,30,0.32);
+      border: 2px solid #ffe06655;
+      box-shadow: 0 2px 12px #ffe06622;
+      line-height: 1.8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      width: 95%;
+      margin-left: auto;
+      margin-right: auto;
+      word-break: break-word;
+      text-shadow: 0 2px 8px #222, 0 0 4px #ffe06633;
+    }
+
+    #choices {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-around;
+      align-items: center;
+      gap: 24px;
+      margin-top: 18px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+      width: 100%;
+    }
+
+    .choice {
+      font-family: 'VT323', 'Press Start 2P', monospace, sans-serif;
+      background: linear-gradient(90deg, #ffe066 60%, #ffb700 100%);
+      color: #222;
+      border: 2.5px solid #ffb700;
+      box-shadow: 0 2px 12px #ffe06655, 0 0 0 2px #ffb70033;
+      font-size: 1.2em;
+      font-weight: bold;
+      letter-spacing: 1.2px;
+      padding: 12px 18px;
+      border-radius: 10px;
+      margin: 0;
+      transition: background 0.3s, transform 0.2s, box-shadow 0.3s, color 0.2s, filter 0.3s;
+      cursor: pointer;
+      min-width: 200px;
+      max-width: 300px;
+      min-height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: 1 1 0;
+      text-align: center;
+      word-break: break-word;
+      position: relative;
+      overflow: hidden;
+      z-index: 1;
+    }
+
+    .choice:hover::before {
+      opacity: 1;
+    }
+
+    .choice:active {
+      background: linear-gradient(90deg, #ffe066 80%, #ffb700 100%);
+      color: #333;
+      transform: scale(0.97);
+    }
+
+    @keyframes titlepop {
+      0% { transform: scale(0.7) rotate(-5deg); opacity: 0; }
+      60% { transform: scale(1.1) rotate(2deg); opacity: 1; }
+      100% { transform: scale(1) rotate(0deg); }
+    }
+
+    @keyframes imgfade {
+      0% { opacity: 0; filter: blur(8px); }
+      60% { opacity: 1; filter: blur(1.5px); }
+      100% { opacity: 1; filter: blur(0); }
+    }
+
+    @media (max-width: 700px) {
+      #game {
+        width: 99vw;
+        max-width: 99vw;
+        min-width: 0;
+        padding: 6px 2vw 8px 2vw;
+      }
+      #scene {
+        min-width: 80px;
+        min-height: 80px;
+      }
+      h1 {
+        font-size: 1em;
+      }
+      #description {
+        font-size: 0.8em;
+        padding: 10px 4px;
+      }
+      .choice {
+        font-size: 0.8em;
+        min-width: 80px;
+        padding: 8px 4px;
+      }
+    }
+
+    html, body {
+      height: 100%;
+    }
+    body {
+      min-height: 100vh;
+      height: 100vh;
+      position: relative;
+    }
+    #particles-bg {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      width: 100vw; height: 100vh;
+      z-index: 0;
+      pointer-events: none;
+    }
+    #game { z-index: 2; }
+  </style>
+</head>
+<body>
+  <!-- Youtube background iframe, autoplay, unmuted, loop, controls hidden -->
+  <iframe id="youtube-bg" src="https://www.youtube.com/embed/08oD5oJb6Rk?autoplay=1&mute=0&controls=0&showinfo=0&rel=0&loop=1&playlist=08oD5oJb6Rk&modestbranding=1&enablejsapi=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+  <div id="particles-bg"></div>
+  <div id="game">
+    <h1>PENJELAJAH TERSESAT: Petualangan di Hutan</h1> 
+    <img id="scene" src="https://img.pikbest.com/backgrounds/20250206/a-young-explorer-with-a-map-walks-through-magical-forest-meeting-friendly-animals_11500158.jpg!bwr800" alt="Gambar Utama">
+    <p id="description"></p>
+    <div id="choices"></div>
+  </div>
+  <!-- Tambahkan library partikel.js -->
+  <script src="https://cdn.jsdelivr.net/npm/tsparticles@3.1.0/tsparticles.bundle.min.js"></script>
+
+  <script>
+    // Data animasi background eksternal (GIF/animasi dari Unsplash/Giphy)
+    const mainImage = "https://img.pikbest.com/backgrounds/20250206/a-young-explorer-with-a-map-walks-through-magical-forest-meeting-friendly-animals_11500158.jpg!bwr800"; // Gambar utama yang selalu tampil
+    const states = {
+      "awal": {
+        text: "Kamu terbangun di tengah hutan lebat, udara dingin menusuk kulit dan suara alam mengelilingimu. Apa yang akan kamu lakukan untuk bertahan hidup?",
+        choices: [
+          { text: "Cari sumber air", next: "sungai" },
+          { text: "Cari tempat tinggi", next: "bukit" }
+        ]
+      },
+      // --- Rute Sungai ---
+      "sungai": {
+        text: "Kamu menemukan sungai yang mengalir jernih di antara pepohonan. Airnya segar, namun arusnya cukup deras. Apa langkahmu?",
+        choices: [
+          { text: "Buat rakit dan susuri sungai", next: "rakit" },
+          { text: "Berjalan kaki menyusuri tepi sungai", next: "jalan_kaki" }
+        ]
+      },
+      "rakit": {
+        text: "Kamu berhasil membuat rakit sederhana dan mulai menyusuri sungai. Tak lama, kamu sampai di percabangan anak sungai. Jalur mana yang kamu pilih?",
+        choices: [
+          { text: "Pilih jalur kiri (arus deras)", next: "rakit_kiri" },
+          { text: "Pilih jalur kanan (hutan terang)", next: "rakit_kanan" }
+        ]
+      },
+      "rakit_kiri": {
+        text: "Arus sungai semakin deras! Rakitmu oleng dan kamu terjatuh ke air yang dingin. Kamu tak mampu berenang ke tepian...\n\nKamu tenggelam dan game berakhir.",
+        choices: [
+          { text: "Coba lagi dari awal", next: "awal" }
+        ]
+      },
+      "rakit_kanan": {
+        text: "Kamu memilih jalur kanan. Sungai mengalir tenang menuju hutan yang lebih terang. Setelah beberapa lama, kamu melihat pemukiman di kejauhan!\n\nApa yang akan kamu lakukan?",
+        choices: [
+          { text: "Lanjutkan perjalanan ke pemukiman", next: "desa" },
+          { text: "Berhenti dan beristirahat di tepi sungai", next: "mati_lapar" }
+        ]
+      },
+      "mati_lapar": {
+        text: "Kamu memutuskan untuk beristirahat. Tubuhmu mulai lemas karena kelaparan dan kelelahan.\n\nSayangnya, kamu tidak mampu bertahan dan akhirnya meninggal dunia. Game over.",
+        choices: [
+          { text: "Coba lagi dari awal", next: "awal" }
+        ]
+      },
+      "desa": {
+        text: "Kamu berhasil mencapai pemukiman! Penduduk desa menyambutmu dengan hangat dan kamu selamat dari petualangan di hutan.\n\nSelamat, kamu menang!",
+        choices: []
+      },
+      "jalan_kaki": {
+        text: "Kamu berjalan kaki menyusuri tepi sungai. Setelah beberapa lama, kamu dihadapkan pada dua pilihan jalur. Apa yang kamu lakukan?",
+        choices: [
+          { text: "Jalan terus dari tepi sungai", next: "jalan_terus" },
+          { text: "Jalan menjauh dari tepi sungai", next: "hewan_buas" }
+        ]
+      },
+      "jalan_terus": {
+        text: "Kamu terus berjalan mengikuti aliran sungai hingga tiba di hutan yang lebih terang.\n\nApa yang akan kamu lakukan?",
+        choices: [
+          { text: "Lanjutkan perjalanan ke pemukiman", next: "desa" },
+          { text: "Berhenti dan beristirahat", next: "mati_lapar" }
+        ]
+      },
+      "hewan_buas": {
+        text: "Kamu berjalan menjauh dari sungai dan masuk ke hutan lebat. Tiba-tiba, seekor hewan buas muncul dari balik semak!\n\nKamu tidak sempat melarikan diri dan menjadi mangsa hewan buas. Game over.",
+        choices: [
+          { text: "Coba lagi dari awal", next: "awal" }
+        ]
+      },
+
+
+      // --- Rute Bukit ---
+      "bukit": {
+        text: "Kamu mendaki bukit terdekat untuk mencari petunjuk. Dari puncak, kamu melihat asap tipis di kejauhan dan sebuah gua di lereng bukit. Apa yang kamu lakukan?",
+        choices: [
+          { text: "Menuju asap di kejauhan", next: "asap_penjelajah" },
+          { text: "Masuk ke dalam gua", next: "gua" }
+        ]
+      },
+      "asap_penjelajah": {
+        text: "Kamu berjalan menuju asap dan bertemu kelompok penjelajah. Bersama-sama, kalian mencari jalan keluar dan akhirnya menemukan pemukiman.\n\nSelamat, kamu berhasil keluar dari hutan dengan selamat!",
+        choices: []
+      },
+      "gua": {
+        text: "Kamu masuk ke dalam gua yang gelap dan lembap. Di dalamnya, kamu bisa memilih untuk beristirahat dengan membuat api atau langsung tidur. Apa yang kamu lakukan?",
+        choices: [
+          { text: "Beristirahat dan membuat api", next: "api_gua" },
+          { text: "Langsung tidur tanpa api", next: "mati_dingin" }
+        ]
+      },
+      "api_gua": {
+        text: "Kamu membuat api kecil untuk menghangatkan diri. Asap dari api keluar dari mulut gua dan menarik perhatian penduduk desa.\n\nTak lama kemudian, kamu ditemukan dan diselamatkan!",
+        choices: []
+      },
+      "mati_dingin": {
+        text: "Kamu tidur tanpa api di dalam gua. Suhu turun drastis di malam hari dan kamu kedinginan hingga tak sadarkan diri.\n\nSayangnya, kamu meninggal karena hipotermia. Game over.",
+        choices: [
+          { text: "Coba lagi dari awal", next: "awal" }
+        ]
+      }
+    };
+
+    let currentState = "awal";
+
+    // Typewriter effect untuk deskripsi
+    function typeWriter(text, element, speed = 22) {
+      element.textContent = '';
+      let i = 0;
+      function typing() {
+        if (i < text.length) {
+          element.textContent += text.charAt(i);
+          i++;
+          setTimeout(typing, speed);
+        }
+      }
+      typing();
+    }
+
+    // --- Partikel interaktif ---
+    window.addEventListener('DOMContentLoaded', () => {
+      tsParticles.load('particles-bg', {
+        fpsLimit: 60,
+        background: { color: 'transparent' },
+        particles: {
+          number: { value: 60, density: { enable: true, area: 800 } },
+          color: { value: ['#ffe066', '#ffb700', '#fffbe7', '#fff'] },
+          shape: { type: ['circle', 'star'] },
+          opacity: { value: 0.25, random: true },
+          size: { value: 3, random: { enable: true, minimumValue: 1 } },
+          move: { enable: true, speed: 0.7, direction: 'none', random: true, straight: false, outModes: { default: 'out' } },
+          links: { enable: true, distance: 120, color: '#ffe066', opacity: 0.12, width: 1 },
+        },
+        interactivity: {
+          events: {
+            onHover: { enable: true, mode: 'repulse' },
+            onClick: { enable: true, mode: 'push' },
+          },
+          modes: {
+            repulse: { distance: 80, duration: 0.4 },
+            push: { quantity: 4 },
+          },
+        },
+        detectRetina: true,
+      });
+    });
+
+    // --- Youtube autoplay fix ---
+    // Pastikan video dan audio Youtube langsung berjalan saat web dibuka
+    window.addEventListener('DOMContentLoaded', () => {
+      const yt = document.getElementById('youtube-bg');
+      // Paksa play dengan JS API jika browser menghalangi autoplay
+      function tryPlay() {
+        if (yt && yt.contentWindow) {
+          yt.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+        }
+      }
+      // Coba play saat load dan saat user berinteraksi (untuk mengatasi policy browser)
+      yt.addEventListener('load', tryPlay);
+      document.body.addEventListener('click', tryPlay, { once: true });
+      document.body.addEventListener('keydown', tryPlay, { once: true });
+      // Coba play otomatis juga
+      setTimeout(tryPlay, 800);
+    });
+
+    // Tambahkan tombol start
+    let started = false;
+    function showStartScreen() {
+      const gameBox = document.getElementById('game');
+      gameBox.innerHTML = `
+        <h1>PENJELAJAH TERSESAT: Petualangan di Hutan</h1>
+        <img id="scene" src="${mainImage}" alt="Gambar Utama">
+        <button id="start-btn" 
+        style="font-size:1.5em;padding:18px 44px;margin:32px auto;
+        display:block;background:#ffe066;color:#222;border-radius:12px;border:2px solid #ffb700;
+        font-family:'VT323','Press Start 2P',monospace;font-weight:bold;
+        box-shadow:0 2px 12px #ffe06655;cursor:pointer;">Mulai Game</button>
+      `;
+      document.getElementById('start-btn').onclick = () => {
+        started = true;
+        render();
+      };
+    }
+
+    function render() {
+      if (!started) {
+        showStartScreen();
+        return;
+      }
+      const state = states[currentState];
+      const gameBox = document.getElementById('game');
+      gameBox.innerHTML = `
+        <h1>PENJELAJAH TERSESAT: Petualangan di Hutan</h1>
+        <img id="scene" src="${mainImage}" alt="Gambar Utama">
+        <p id="description"></p>
+        <div id="choices"></div>
+      `;
+      // Typewriter effect untuk deskripsi
+      const desc = document.getElementById("description");
+      typeWriter(state.text, desc, 18);
+      // Pilihan
+      const choicesDiv = document.getElementById("choices");
+      choicesDiv.innerHTML = "";
+      state.choices.forEach(choice => {
+        const button = document.createElement("button");
+        button.textContent = choice.text;
+        button.className = "choice fade";
+        button.onclick = () => {
+          document.getElementById("scene").classList.add("anim-out");
+          document.getElementById("description").classList.add("anim-out");
+          document.querySelectorAll('.choice').forEach(btn => btn.classList.add('anim-out'));
+          setTimeout(() => {
+            currentState = choice.next;
+            document.getElementById("scene").classList.remove("anim-out");
+            document.getElementById("description").classList.remove("anim-out");
+            document.querySelectorAll('.choice').forEach(btn => btn.classList.remove('anim-out'));
+            render();
+          }, 450);
+        };
+        choicesDiv.appendChild(button);
+      });
+    }
+    render();
+  </script>
+</body>
+</html>
